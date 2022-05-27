@@ -9,6 +9,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:permission_handler_platform_interface/permission_handler_platform_interface.dart';
 import 'package:analytics/analytics.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 import 'SettingScreen.dart';
 import 'GateOptionsScreen.dart';
@@ -28,13 +29,25 @@ class _HomepageState extends State<Homepage> {
 
   @override
   Widget build(BuildContext context) {
+
+    FirebaseAuth.instance
+        .authStateChanges()
+        .listen((User user) {
+      if (user == null) {
+        print('User is currently signed out!');
+        Navigator.pop(context);
+      } else {
+        print('User is signed in!');
+      }
+    });
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('GATE APP'),
         centerTitle: true,
         leading:  IconButton(
             onPressed:() {
-              Navigator.pop(context);
+              showAlertDialog(context);
             },
             icon: Icon(
               Icons.logout,
@@ -118,6 +131,47 @@ class _HomepageState extends State<Homepage> {
       ),
     );
   }
+
+  Future<void> _signOut() async {
+    await FirebaseAuth.instance.signOut();
+  }
+
+  showAlertDialog(BuildContext context) {
+    // set up the buttons
+    Widget cancelButton = FlatButton(
+      child: Text("Cancel"),
+      onPressed:  () {
+        Navigator.pop(context);
+      },
+    );
+    Widget continueButton = FlatButton(
+      child: Text("Signout"),
+      onPressed:  () {
+        _signOut();
+        Navigator.pop(context);
+        Future.delayed(Duration(seconds: 2), () {
+          Navigator.pop(context);
+        });
+      },
+    );
+    // set up the AlertDialog
+    AlertDialog alert = AlertDialog(
+      title: Text("AlertDialog"),
+      content: Text("Are you sure you want to signout?"),
+      actions: [
+        cancelButton,
+        continueButton,
+      ],
+    );
+    // show the dialog
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return alert;
+      },
+    );
+  }
+
 }
 
 void getImage(BuildContext context) async {
